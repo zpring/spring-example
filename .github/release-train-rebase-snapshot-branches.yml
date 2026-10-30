@@ -1,0 +1,28 @@
+name: "Release Train - Rebase Snapshot Branches"
+"on":
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Repository triggering the sync"
+        required: true
+        type: string
+      branch:
+        description: "Branch triggering the sync"
+        required: true
+        type: string
+jobs:
+  handle:
+    name: Handle Release Branches Synchronization
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.RELEASE_BRANCHES_SYNCHRONIZATION_TOKEN }}
+    - name: Handle Release Branches Synchronization
+      run: |
+        echo "Handling Release Branches Synchronization (${{ inputs.repository }} ${{ inputs.branch }})"

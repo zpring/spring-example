@@ -1,0 +1,23 @@
+name: "Release Train - Rebase Snapshot Branches"
+"on":
+  push:
+    branches:
+    - "main"
+    - "[0-9].[0-9].x"
+    - "[0-9].[0-9].[0-9].x"
+jobs:
+  trigger:
+    name: "Trigger Rebase"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+    - name: "Trigger Rebase"
+      env:
+        GH_TOKEN: ${{ secrets.RELEASE_TRAIN_BRANCH_SYNCHRONIZATION_TOKEN }}
+      if: ${{ env.GH_TOKEN != null }}
+      run: |
+          echo "Triggering Branch Synchronization (${{ format('{0}-commercial', github.repository) }} ${{ github.ref_name }})"
+          gh workflow run release-train-branch-synchronization.yml \
+          --repo ${{ format('{0}-commercial', github.repository) }}  \
+          --field repository=${{ github.repository }} \
+          --field branch=${{ github.ref_name }} \
