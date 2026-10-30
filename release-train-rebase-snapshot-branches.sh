@@ -14,7 +14,14 @@ snapshotVersions=$(git for-each-ref --format='%(refname:lstrip=4)' "refs/remotes
 releaseVersions=$(git for-each-ref --format='%(refname:lstrip=4)' "refs/remotes/$commercialRemote/release/*" | sort)
 candidateVersions=$(comm -2 -3 <(echo "$snapshotVersions") <(echo "$releaseVersions"))
 
-for candidateVersion in "$candidateVersions"; do
-    echo "$candidateVersion"
-    git show snapshot/$candidateVersion:README.adoc
+echo "$candidateVersions" | while IFS= read -r candidateVersion ; do
+    localAheadCount=$(git rev-list --count "$commercialRemote/snapshot/$candidateVersion".."snapshot/$candidateVersion" 2>/dev/null)
+    [[ "$localAheadCount" > 0 ]] && candidateBranch="snapshot/$candidateVersion" || candidateBranch="$commercialRemote/snapshot/$candidateVersion"
+    tracking=$(git show "${candidateBranch}":.github/release-train-rebase-tracking 2>/dev/null)
+    if grep -q "^${repository}/${branch}$" <<< "$tracking"; then
+        echo "Rebasing snapshot branch $candidateVersion"
+        
+
+    fi
 done
+
