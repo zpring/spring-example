@@ -22,13 +22,12 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        token: ${{ secrets.RELEASE_BRANCHES_SYNCHRONIZATION_TOKEN }}
+        token: ${{ secrets.REBASE_SNAPSHOT_BRANCHES_TOKEN }}
     - name: "Rebase"
       shell: bash
       run: |
         git config user.name "Spring Builds"
         git config user.email "spring-builds@users.noreply.github.com"
         git remote add oss https://github.com/${{ inputs.oss-repository }}
-        git fetch upstream ${{ inputs.oss-branch }}
-        chmod +x .github/scripts/release-train-rebase-snapshot-branches.sh
+        git fetch oss ${{ inputs.oss-branch }}
         .github/scripts/release-train-rebase-snapshot-branches.sh

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-
+{
 ossRepository="${1:?No repository specified}"
 ossBranch="${2:?No branch specified}"
 commercialRepository=${ossRepository}-commercial
@@ -38,7 +38,8 @@ done <<< "${candidateVersions}"
 if [[ -n "${rebasedBranches}" ]]; then
     git push -q --atomic --force-with-lease --force-if-includes "${commercialRemote}" "${rebasedBranches}"
 fi
-
+exit
+}
 
 # https://github.com/spring-projects/spring-boot/blob/main/.github/actions/send-notification/action.yml
 # https://github.com/spring-io/spring-github-workflows/blob/main/.github/actions/spring-failure-to-gchat/action.yml
