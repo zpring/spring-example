@@ -27,8 +27,7 @@ while IFS= read -r version ; do
     tracking=$(git show "${commercialRemote}/snapshot/${version}":.github/release-train-rebase-tracking 2>/dev/null || true)
     if grep -q "^${ossRepository}/${ossBranch}$" <<< "${tracking}"; then
         echo "Rebasing snapshot branch ${version}"
-        directory=$(git worktree list --porcelain | grep -B 2 "branch refs/heads/snapshot/${version}" | head -n 1 | awk '{print $2}')
-        [[ -z "${directory}" ]] && directory=$(pwd)
+        directory=$(git worktree list --porcelain | grep -B 2 "branch refs/heads/snapshot/${version}" | head -n 1 | awk '{print $2}' || pwd)
         pushd "${directory}" > /dev/null
             originalBranch=$(git branch --show-current)
             git checkout -q snapshot/"${version}"
