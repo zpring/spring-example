@@ -1,35 +1,46 @@
 #!/bin/bash
 set -euo pipefail
 
-upstreamRepository="${1:?No upstream repository specified}"
-upstreamBranch="${2:?No upstream branch specified}"
+ossRepository="${1:?No repository specified}"
+ossBranch="${2:?No branch specified}"
+commercialRepository=${ossRepository}-commercial
 
 for remote in $(git remote); do
-    git remote get-url "$remote" | grep ".*/${upstreamRepository}[\.git$|$]" &>/dev/null && upstreamRemote="$remote"
-    git remote get-url "$remote" | grep ".*/${upstreamRepository}-commercial[\.git$|$]" &>/dev/null && snapshotRemote="$remote"
+    git remote get-url "${remote}" | grep ".*/${ossRepository}[\.git$|$]" &>/dev/null && ossRemote="${remote}"
+    git remote get-url "${remote}" | grep ".*/${commercialRepository}[\.git$|$]" &>/dev/null && commercialRemote="${remote}"
 done
 
-[[ -z "$upstreamRemote" ]] && { echo "Can't find remote for $upstreamRepository" >&2; exit 1; }
-[[ -z "$snapshotRemote" ]] && { echo "Can't find snapshot remote for $repupstreamRepositoryository" >&2; exit 1; }
+[[ -z "${ossRemote}" ]] && { echo "Can't find OSS remote for ${ossRepository}" >&2; exit 1; }
+[[ -z "${commercialRemote}" ]] && { echo "Can't find commercial remote for ${commercialRepository}" >&2; exit 1; }
 
-snapshotVersions=$(git for-each-ref --format='%(refname:lstrip=4)' "refs/remotes/$snapshotRemote/snapshot/*" | sort)
-releaseVersions=$(git for-each-ref --format='%(refname:lstrip=4)' "refs/remotes/$snapshotRemote/release/*" | sort)
-candidateVersions=$(comm -2 -3 <(echo "$snapshotVersions") <(echo "$releaseVersions"))
+snapshotVersions=$(git for-each-ref --format='%(refname:lstrip=4)' "refs/remotes/${commercialRemote}/snapshot/*" | sort)
+releaseVersions=$(git for-each-ref --format='%(refname:lstrip=4)' "refs/remotes/${commercialRemote}/release/*" | sort)
+candidateVersions=$(comm -2 -3 <(echo "${snapshotVersions}") <(echo "${releaseVersions}"))
 
-echo "$candidateVersions" | while IFS= read -r candidateVersion ; do
-    localAheadCount=$(git rev-list --count "$commercialRemote/snapshot/$candidateVersion".."snapshot/$candidateVersion" 2> /dev/null)
-    [[ "$localAheadCount" > 0 ]] && candidateBranch="snapshot/$candidateVersion" || candidateBranch="$commercialRemote/snapshot/$candidateVersion"
-    tracking=$(git show "${candidateBranch}":.github/release-train-rebase-tracking 2>/dev/null)
-    if grep -q "^${repository}/${branch}$" <<< "$tracking"; then
-        echo "Rebasing snapshot branch $candidateVersion"
-        directory=$(git worktree list --porcelain | grep -B 2 "branch refs/heads/snapshot/$candidateVersion" | head -n 1 | awk '{print $2}')
-        [[ -z "$directory" ]] && directory=$(pwd)
-        pushd "$directory" > /dev/null
-            branch=$(git branch --show-current)
-            git checkout -q snapshot/"$candidateVersion"
-            git merge -q --ff-only "$candidateBranch"
-            git checkout -q "$branch"
+rebasedBranches=""
+while IFS= read -r version ; do
+    tracking=$(git show "${commercialRemote}/snapshot/${version}":.github/release-train-rebase-tracking 2>/dev/null || true)
+    if grep -q "^${ossRepository}/${ossBranch}$" <<< "${tracking}"; then
+        echo "Rebasing snapshot branch ${version}"
+        directory=$(git worktree list --porcelain | grep -B 2 "branch refs/heads/snapshot/${version}" | head -n 1 | awk '{print $2}')
+        [[ -z "${directory}" ]] && directory=$(pwd)
+        pushd "${directory}" > /dev/null
+            originalBranch=$(git branch --show-current)
+            git checkout -q snapshot/"${version}"
+            git merge -q --ff-only  "${commercialRemote}/snapshot/${version}"
+            git rebase -q "${ossRemote}/${ossBranch}"
+            rebasedBranches="${rebasedBranches:+$rebasedBranches }snapshot/${version}"
+            git checkout -q "${originalBranch}"
         popd > /dev/null
     fi
-done
+done <<< "${candidateVersions}"
+
+if [[ -n "${rebasedBranches}" ]]; then
+    git push -q --atomic --force-with-lease --force-if-includes "${commercialRemote}" "${rebasedBranches}"
+fi
+
+
+# https://github.com/spring-projects/spring-boot/blob/main/.github/actions/send-notification/action.yml
+# https://github.com/spring-io/spring-github-workflows/blob/main/.github/actions/spring-failure-to-gchat/action.yml
+# https://github.com/spring-projects/spring-aot-smoke-tests/blob/ci/.github/actions/send-notification/action.yml
 
