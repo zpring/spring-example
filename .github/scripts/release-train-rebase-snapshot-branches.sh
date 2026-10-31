@@ -7,7 +7,10 @@ commercialRepository=${ossRepository}-commercial
 
 git remote -v
 
+ossRemote=""
+commercialRemote=""
 for remote in $(git remote); do
+    git remote get-url "${remote}" 
     git remote get-url "${remote}" | grep ".*/${ossRepository}[\.git$|$]" &>/dev/null && ossRemote="${remote}"
     git remote get-url "${remote}" | grep ".*/${commercialRepository}[\.git$|$]" &>/dev/null && commercialRemote="${remote}"
 done
