@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euox pipefail
+set -euo pipefail
 {
 ossRepository="${1:?No repository specified}"
 ossBranch="${2:?No branch specified}"
