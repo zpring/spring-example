@@ -1,4 +1,4 @@
-name: "Release Train - Rebase Snapshot Branches"
+name: "Release Train - Trigger Rebase Snapshot Branches"
 "on":
   push:
     branches:
@@ -19,5 +19,5 @@ jobs:
           echo "Triggering Branch Synchronization (${{ format('{0}-commercial', github.repository) }} ${{ github.ref_name }})"
           gh workflow run release-train-branch-synchronization.yml \
           --repo ${{ format('{0}-commercial', github.repository) }}  \
-          --field repository=${{ github.repository }} \
-          --field branch=${{ github.ref_name }} \
+          --field oss-repository=${{ github.repository }} \
+          --field oss-branch=${{ github.ref_name }} \

@@ -2,27 +2,33 @@ name: "Release Train - Rebase Snapshot Branches"
 "on":
   workflow_dispatch:
     inputs:
-      repository:
-        description: "Repository triggering the sync"
+      oss-repository:
+        description: "OSS repository to rebase onto"
         required: true
         type: string
-      branch:
-        description: "Branch triggering the sync"
+      oss-branch:
+        description: "OSS branch to rebase onto"
         required: true
         type: string
 jobs:
   handle:
-    name: Handle Release Branches Synchronization
+    name: "Handle Rebase"
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     steps:
-    - name: Checkout
+    - name: "Checkout"
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         token: ${{ secrets.RELEASE_BRANCHES_SYNCHRONIZATION_TOKEN }}
-    - name: Handle Release Branches Synchronization
+    - name: "Rebase"
+      shell: bash
       run: |
-        echo "Handling Release Branches Synchronization (${{ inputs.repository }} ${{ inputs.branch }})"
+        git config user.name "Spring Builds"
+        git config user.email "spring-builds@users.noreply.github.com"
+        git remote add oss https://github.com/${{ inputs.oss-repository }}
+        git fetch upstream ${{ inputs.oss-branch }}
+        chmod +x .github/scripts/release-train-rebase-snapshot-branches.sh
+        .github/scripts/release-train-rebase-snapshot-branches.sh
