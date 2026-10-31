@@ -12,7 +12,7 @@ name: "Release Train - Rebase Snapshot Branches"
         type: string
 jobs:
   handle:
-    name: "Handle Rebase"
+    name: "Rebase"
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
     permissions:
