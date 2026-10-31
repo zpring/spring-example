@@ -11,8 +11,8 @@ ossRemote=""
 commercialRemote=""
 for remote in $(git remote); do
     git remote get-url "${remote}" 
-    git remote get-url "${remote}" | grep ".*/${ossRepository}[\.git$|$]" &>/dev/null && ossRemote="${remote}"
-    git remote get-url "${remote}" | grep ".*/${commercialRepository}[\.git$|$]" &>/dev/null && commercialRemote="${remote}"
+    git remote get-url "${remote}" | grep -E ".*/${ossRepository}(\.git|)$" &>/dev/null && ossRemote="${remote}"
+    git remote get-url "${remote}" | grep -E ".*/${commercialRepository}(\.git|)$" &>/dev/null && commercialRemote="${remote}"
 done
 
 [[ -z "${ossRemote}" ]] && { echo "Can't find OSS remote for ${ossRepository}" >&2; exit 1; }
