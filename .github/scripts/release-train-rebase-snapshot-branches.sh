@@ -5,7 +5,7 @@ ossRepository="${1:?No repository specified}"
 ossBranch="${2:?No branch specified}"
 commercialRepository=${ossRepository}-commercial
 
-git remote
+git remote -v
 
 for remote in $(git remote); do
     git remote get-url "${remote}" | grep ".*/${ossRepository}[\.git$|$]" &>/dev/null && ossRemote="${remote}"
