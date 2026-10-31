@@ -9,7 +9,7 @@ jobs:
   trigger:
     name: "Trigger Rebase"
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && !endsWith(github.ref_name, '-commercial')
+    if: github.event_name == 'push' && !endsWith(github.repository, '-commercial')
     steps:
     - name: "Trigger Rebase"
       env:
