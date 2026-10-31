@@ -30,4 +30,4 @@ jobs:
         git config user.email "spring-builds@users.noreply.github.com"
         git remote add oss https://github.com/${{ inputs.oss-repository }}
         git fetch oss ${{ inputs.oss-branch }}
-        .github/scripts/release-train-rebase-snapshot-branches.sh
+        .github/scripts/release-train-rebase-snapshot-branches.sh ${{ inputs.oss-repository }} ${{ inputs.oss-branch }}
