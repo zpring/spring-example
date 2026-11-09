@@ -1,0 +1,20 @@
+name: Send notification
+description: Sends a Google Chat message as a notification of the job's outcome
+inputs:
+  google-chat-webhook-url:
+    description: 'Google Chat Webhook URL'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: "Send Notificcation"
+      shell: bash
+      run: |
+        set -euo pipefail
+        MESSAGE=$(jq -n \
+            --arg project '${{ github.event.repository.name }}' \
+            --arg workflow '${{ github.workflow }}' \
+            --arg ref '${{ github.ref_name }}' \
+            --arg url '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            '{text: "`\($project)`: `\($workflow)` has <\($url)|failed> on `\($ref)`"}')
+        curl -s --show-error -X POST -H 'Content-Type: application/json' -d "${MESSAGE}" '${{ inputs.google-chat-webhook-url }}'

@@ -1,0 +1,40 @@
+name: "Release Train - Rebase Snapshot Branches"
+"on":
+  workflow_dispatch:
+    inputs:
+      oss-repository:
+        description: "OSS repository to rebase onto"
+        required: true
+        type: string
+      oss-branch:
+        description: "OSS branch to rebase onto"
+        required: true
+        type: string
+jobs:
+  handle:
+    name: "Rebase"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    steps:
+    - name: "Checkout"
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.REBASE_SNAPSHOT_BRANCHES_TOKEN }}
+    - name: "Rebase"
+      shell: bash
+      run: |
+        git config user.name "Spring Builds"
+        git config user.email "spring-builds@users.noreply.github.com"
+        git remote add oss https://github.com/${{ inputs.oss-repository }}
+        git fetch oss ${{ inputs.oss-branch }}
+        .github/scripts/release-train-rebase-snapshot-branches.sh ${{ inputs.oss-repository }} ${{ inputs.oss-branch }}
+    - name: "Notify"
+      env:
+        GOOGLE_CHAT_WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+      if: ${{ failure() && env.GOOGLE_CHAT_WEBHOOK_URL }}
+      uses: ./.github/actions/send-notification
+      with:
+        google-chat-webhook-url: ${{ env.GOOGLE_CHAT_WEBHOOK_URL }}
